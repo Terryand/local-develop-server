@@ -2,6 +2,8 @@ const mount = require('koa-mount');
 const Koa = require('koa');
 const Router = require('koa-router');
 const serve = require('koa-static');
+const httpProxy = require('http-proxy-middleware');
+const k2c = require('koa2-connect');
 const colors = require('colors');
 const parseProgressArgv = require('./utils/parseProgressArgv');
 
@@ -11,8 +13,9 @@ const router = new Router();
 // 默认配置项
 const defaultConfig = {
   port: 3000,
-  proxy: '',
-  staticsPath: `${__dirname}/statics`,
+  staticspath: `${__dirname}/statics`,
+  proxypath: '/api',
+  proxytarget: '',
 };
 const userConfig = parseProgressArgv(process.argv);
 const config = {
@@ -33,6 +36,23 @@ if (!config.mode || isNaN(config.mode)) {
   config.mode = Number(config.mode);
 }
 
+// 代理配置
+if (config.proxypath && config.proxytarget) {
+  app.use(async (ctx, next) => {
+    if (ctx.url.indexOf(config.proxypath) === 0) {
+      ctx.respond = false;
+
+      await k2c(httpProxy({
+        target: config.proxytarget,
+        changeOrigin: true,
+        secure: false,
+      }))(ctx, next);
+    }
+
+    await next();
+  });
+}
+
 /**
  * 本服务提供两种模式访问。
  *  mode: 1     服务模式; 需要通过 /statics/... 这样的路径访问 statics 目录下的静态文件。此模式下，本服务提供的其他工具( 如 px 转 rem )依旧可用
@@ -46,14 +66,14 @@ if (config.mode === 1) {
 
   // statics mount app
   const staticsApp = new Koa();
-  staticsApp.use(serve(config.staticsPath));
+  staticsApp.use(serve(config.staticspath));
 
   app.use(mount('/statics', staticsApp));
   app.use(router.routes());
   // 应用自身的静态资源
   app.use(serve(`${__dirname}/public`));
 } else {
-  app.use(serve(config.staticsPath));
+  app.use(serve(config.staticspath));
 }
 
 app.listen(config.port);
