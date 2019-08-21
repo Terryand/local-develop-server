@@ -12,6 +12,7 @@ const router = new Router();
 const defaultConfig = {
   port: 3000,
   proxy: '',
+  staticsPath: `${__dirname}/statics`,
 };
 const userConfig = parseProgressArgv(process.argv);
 const config = {
@@ -45,12 +46,14 @@ if (config.mode === 1) {
 
   // statics mount app
   const staticsApp = new Koa();
-  staticsApp.use(serve(`${__dirname}/statics`));
+  staticsApp.use(serve(config.staticsPath));
 
   app.use(mount('/statics', staticsApp));
   app.use(router.routes());
+  // 应用自身的静态资源
+  app.use(serve(`${__dirname}/public`));
 } else {
-  app.use(serve(`${__dirname}/statics`));
+  app.use(serve(config.staticsPath));
 }
 
 app.listen(config.port);
