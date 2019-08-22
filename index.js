@@ -52,7 +52,6 @@ if (config.proxypath && config.proxytarget) {
         }))(ctx, next);
       }
 
-      console.log('a');
       await next();
     });
   } else {
