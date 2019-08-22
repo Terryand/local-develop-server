@@ -38,19 +38,38 @@ if (!config.mode || isNaN(config.mode)) {
 
 // 代理配置
 if (config.proxypath && config.proxytarget) {
-  app.use(async (ctx, next) => {
-    if (ctx.url.indexOf(config.proxypath) === 0) {
-      ctx.respond = false;
 
-      await k2c(httpProxy({
-        target: config.proxytarget,
-        changeOrigin: true,
-        secure: false,
-      }))(ctx, next);
-    }
+  // 为 xue.offcn.com 专业定制
+  if (config.mode === 3) {
+    app.use(async (ctx, next) => {
+      if (ctx.url.indexOf('/api/') > -1) {
+        ctx.respond = false;
 
-    await next();
-  });
+        await k2c(httpProxy({
+          target: config.proxytarget,
+          changeOrigin: true,
+          secure: false,
+        }))(ctx, next);
+      }
+
+      console.log('a');
+      await next();
+    });
+  } else {
+    app.use(async (ctx, next) => {
+      if (ctx.url.indexOf(config.proxypath) === 0) {
+        ctx.respond = false;
+
+        await k2c(httpProxy({
+          target: config.proxytarget,
+          changeOrigin: true,
+          secure: false,
+        }))(ctx, next);
+      }
+
+      await next();
+    });
+  }
 }
 
 /**
