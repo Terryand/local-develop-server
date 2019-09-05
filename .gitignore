@@ -26,3 +26,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# user private config file( if they really don't want to use commond arguments )
+/user-config/*

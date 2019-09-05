@@ -27,5 +27,4 @@ function parseProgressArgv(argv) {
   return result;
 };
 
-
 module.exports = parseProgressArgv;
