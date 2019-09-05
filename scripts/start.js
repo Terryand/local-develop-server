@@ -36,7 +36,6 @@ function startServer() {
 
   if (!configs) return false;
 
-  console.log(configs);
   localSever(configs);
 }
 
