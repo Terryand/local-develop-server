@@ -2,34 +2,42 @@ const parseProgressArgv = require('../utils/parseProgressArgv');
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors');
+const paths = require('../config/paths');
+const localSever = require(paths.entry);
+
+/**
+ * get configuration from configuration file
+ */
+function readConfiguration(f) {
+  // 无论用户使用什么样的路径形式，这里统一使用全路径，保证全平台兼容和后期扩展性
+  const fullFilePath = path.resolve(f);
+
+  if (!fs.existsSync(fullFilePath)) {
+    console.log(`${fullFilePath} ${colors.red('is not existed.')}`);
+    return null;
+  }
+
+  const configs = {
+    f: fullFilePath,
+    ...require(fullFilePath),
+  };
+
+  return configs;
+}
 
 function startServer() {
   const userConfig = parseProgressArgv(process.argv);
 
+  let configs = { ...userConfig };
   // 如果用户指定了配置文件，则优先从文件中读取配置并启动，忽略其他命令行参数
   if (userConfig && userConfig.f) {
-    // 无论用户使用什么样的路径形式，这里统一使用全路径，保证全平台兼容和后期扩展性
-    userConfig.f = path.resolve(userConfig.f);
-    if (!fs.existsSync(userConfig.f)) {
-      console.log(`${userConfig.f} ${colors.red('is not existed.')}`);
-
-      return false;
-    }
-
-    let configs;
-    try {
-      configs = JSON.parse(fs.readFileSync(userConfig.f, 'utf8'));
-
-      if (typeof configs !== 'object') {
-        throw new Error(`${userConfig.f} is not a right json file.`);
-      }
-    } catch(e) {
-      console.log(colors.red(e.message));
-    }
-
-    console.log(configs);
-    console.log(colors.green('Reading your config file and will start server soon'));
+    configs = readConfiguration(userConfig.f);
   }
+
+  if (!configs) return false;
+
+  console.log(configs);
+  localSever(configs);
 }
 
 startServer();
